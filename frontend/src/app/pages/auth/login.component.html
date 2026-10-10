@@ -1,0 +1,36 @@
+<div class="card auth-card">
+  <div class="card-body p-4">
+    <h3 class="text-center mb-1">ParkCity</h3>
+    <p class="text-center text-muted mb-4">Sistem javnog parkiranja – prijava</p>
+
+    @if (error()) {
+      <div class="alert alert-danger">{{ error() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="mb-3">
+        <label class="form-label" for="email">Email</label>
+        <input id="email" type="email" class="form-control" formControlName="email"
+               [class.is-invalid]="form.controls.email.touched && form.controls.email.invalid"
+               autocomplete="username">
+        <div class="invalid-feedback">Unesi ispravnu email adresu.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="password">Lozinka</label>
+        <input id="password" type="password" class="form-control" formControlName="password"
+               [class.is-invalid]="form.controls.password.touched && form.controls.password.invalid"
+               autocomplete="current-password">
+        <div class="invalid-feedback">Unesi lozinku.</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100" [disabled]="loading()">
+        {{ loading() ? 'Prijavljivanje...' : 'Prijavi se' }}
+      </button>
+    </form>
+
+    <p class="text-center mt-3 mb-0">
+      Nemaš nalog? <a routerLink="/register">Registruj se</a>
+    </p>
+  </div>
+</div>

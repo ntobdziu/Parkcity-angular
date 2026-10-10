@@ -1,0 +1,100 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h2 class="mb-0">{{ auth.hasRole('gradjanin') ? 'Moje parking karte' : 'Parking karte' }}</h2>
+
+  <div class="d-flex gap-2 align-items-center">
+    <select class="form-select" [ngModel]="statusFilter" (ngModelChange)="statusFilter = $event; changeFilter()" aria-label="Filter statusa">
+      <option value="">Svi statusi</option>
+      <option value="aktivna">Aktivne</option>
+      <option value="istekla">Istekle</option>
+      <option value="otkazana">Otkazane</option>
+    </select>
+
+    @if (auth.hasRole('gradjanin')) {
+      <a routerLink="/tickets/new" class="btn btn-primary text-nowrap">+ Kupi parking kartu</a>
+    }
+  </div>
+</div>
+
+@if (message()) {
+  <div class="alert alert-success">{{ message() }}</div>
+}
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          @if (!auth.hasRole('gradjanin')) {
+            <th>Korisnik</th>
+          }
+          <th>Vozilo</th>
+          <th>Zona</th>
+          <th>Početak</th>
+          <th>Kraj</th>
+          <th class="text-end">Cena</th>
+          <th>Status</th>
+          <th class="text-end">Akcije</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (result(); as page) {
+          @for (t of page.data; track t.id) {
+            <tr>
+              @if (!auth.hasRole('gradjanin')) {
+                <td>{{ t.user?.name }}</td>
+              }
+              <td>
+                <strong>{{ t.vehicle?.plate }}</strong>
+                <div class="small text-muted">{{ t.vehicle?.brand }} {{ t.vehicle?.model }}</div>
+              </td>
+              <td>{{ t.zone?.name }}</td>
+              <td>{{ t.start_time | date: 'dd.MM.yyyy HH:mm' }}</td>
+              <td>{{ t.end_time | date: 'dd.MM.yyyy HH:mm' }}</td>
+              <td class="text-end">{{ t.price | number: '1.2-2' }} RSD</td>
+              <td><app-status-badge [status]="t.status" /></td>
+              <td class="text-end text-nowrap">
+                <a [routerLink]="['/tickets', t.id]" class="btn btn-sm btn-outline-secondary">Detalji</a>
+                @if (auth.hasRole('gradjanin') && t.status === 'aktivna') {
+                  <button type="button" class="btn btn-sm btn-outline-primary ms-1" (click)="startExtend(t)">Produži</button>
+                  <button type="button" class="btn btn-sm btn-outline-danger ms-1" (click)="cancel(t)">Otkaži</button>
+                }
+              </td>
+            </tr>
+
+            @if (extendingId() === t.id) {
+              <tr class="table-light">
+                <td [attr.colspan]="auth.hasRole('gradjanin') ? 7 : 8">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span>Produži za:</span>
+                    <select class="form-select w-auto" [(ngModel)]="extraMinutes" aria-label="Dodatni minuti">
+                      @for (m of extraOptions; track m) {
+                        <option [ngValue]="m">{{ m }} min</option>
+                      }
+                    </select>
+                    <button type="button" class="btn btn-sm btn-primary" (click)="confirmExtend(t)">Potvrdi</button>
+                    <button type="button" class="btn btn-sm btn-link" (click)="extendingId.set(null)">Odustani</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="8" class="text-center text-muted py-4">Nema parking karata za prikaz.</td>
+            </tr>
+          }
+        } @else {
+          <tr>
+            <td colspan="8" class="text-center text-muted py-4">{{ loading() ? 'Učitavanje...' : '' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (result(); as page) {
+  <app-pager [page]="page.current_page" [lastPage]="page.last_page" (pageChange)="goToPage($event)" />
+}

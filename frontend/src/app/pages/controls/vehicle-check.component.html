@@ -1,0 +1,95 @@
+@if (success()) {
+  <div class="alert alert-success">{{ success() }}</div>
+}
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+
+<!-- 1. korak: unos registarske oznake -->
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">Provera vozila</h5>
+
+    <form [formGroup]="plateForm" (ngSubmit)="search()" class="row g-2 align-items-end" novalidate>
+      <div class="col-sm-8 col-md-6">
+        <label class="form-label" for="plate">Registarska oznaka</label>
+        <input id="plate" type="text" class="form-control text-uppercase" formControlName="plate"
+               placeholder="npr. NP-123-AA"
+               [class.is-invalid]="plateForm.controls.plate.touched && plateForm.controls.plate.invalid">
+        <div class="invalid-feedback">Unesi registarsku oznaku.</div>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary" [disabled]="searching()">
+          {{ searching() ? 'Provera...' : 'Proveri' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2. korak: rezultat provere i potvrda kontrole -->
+@if (lookup(); as res) {
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <h4 class="mb-0">{{ res.vehicle.plate }}</h4>
+          <div class="text-muted">{{ res.vehicle.brand }} {{ res.vehicle.model }} ({{ res.vehicle.type }})</div>
+          <div class="text-muted">Vlasnik: {{ res.vehicle.owner?.name }}</div>
+        </div>
+        <div class="text-end">
+          <div class="small text-muted">Predlog sistema</div>
+          <app-status-badge [status]="res.suggested_result" />
+        </div>
+      </div>
+
+      <dl class="row mb-4">
+        <dt class="col-sm-4">Aktivna parking karta</dt>
+        <dd class="col-sm-8">
+          @if (res.active_ticket; as ticket) {
+            {{ ticket.zone?.name }}, važi do {{ ticket.end_time | date: 'dd.MM.yyyy HH:mm' }}
+          } @else {
+            <span class="text-danger">Nema aktivne karte</span>
+          }
+        </dd>
+
+        <dt class="col-sm-4">Rezidentska dozvola</dt>
+        <dd class="col-sm-8">
+          @if (res.active_permit; as permit) {
+            {{ permit.zone?.name }}, važi do {{ permit.valid_until | date: 'dd.MM.yyyy' }}
+          } @else {
+            <span class="text-muted">Nema važeće dozvole</span>
+          }
+        </dd>
+      </dl>
+
+      <form [formGroup]="confirmForm" (ngSubmit)="confirm()" novalidate>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="location">Lokacija kontrole</label>
+            <input id="location" type="text" class="form-control" formControlName="location"
+                   placeholder="npr. Ulica Kralja Petra, Zona 1"
+                   [class.is-invalid]="confirmForm.controls.location.touched && confirmForm.controls.location.invalid">
+            <div class="invalid-feedback">Unesi lokaciju.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label" for="result">Rezultat kontrole</label>
+            <select id="result" class="form-select" formControlName="result">
+              <option value="ispravno">Ispravno (bez kazne)</option>
+              <option value="isteklo">Isteklo (kazna {{ 3000 | number }} RSD)</option>
+              <option value="neplaceno">Neplaćeno (kazna {{ 3000 | number }} RSD)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <button type="submit" class="btn btn-success" [disabled]="saving()">
+            {{ saving() ? 'Čuvanje...' : 'Potvrdi kontrolu' }}
+          </button>
+          <button type="button" class="btn btn-link" (click)="cancel()">Odustani</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

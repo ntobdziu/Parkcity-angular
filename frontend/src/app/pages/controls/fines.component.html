@@ -1,0 +1,103 @@
+<div class="d-flex justify-content-end mb-3">
+  <select class="form-select w-auto" [ngModel]="statusFilter" (ngModelChange)="statusFilter = $event; changeFilter()" aria-label="Filter statusa">
+    <option value="">Sve kazne</option>
+    <option value="neplacena">Neplaćene</option>
+    <option value="placena">Plaćene</option>
+    <option value="u_postupku">U postupku</option>
+  </select>
+</div>
+
+@if (message()) {
+  <div class="alert alert-success">{{ message() }}</div>
+}
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Izdata</th>
+          <th>Vozilo</th>
+          @if (!auth.hasRole('gradjanin')) {
+            <th>Vlasnik</th>
+          }
+          <th>Lokacija</th>
+          <th class="text-end">Iznos</th>
+          <th>Status</th>
+          <th>Plaćeno</th>
+          @if (canCollect()) {
+            <th class="text-end">Akcija</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @if (result(); as page) {
+          @for (f of page.data; track f.id) {
+            <tr>
+              <td>{{ f.id }}</td>
+              <td>{{ f.issued_at | date: 'dd.MM.yyyy HH:mm' }}</td>
+              <td>
+                <strong>{{ f.vehicle?.plate }}</strong>
+                <div class="small text-muted">{{ f.vehicle?.brand }} {{ f.vehicle?.model }}</div>
+              </td>
+              @if (!auth.hasRole('gradjanin')) {
+                <td>{{ f.vehicle?.owner?.name }}</td>
+              }
+              <td>{{ f.control?.location }}</td>
+              <td class="text-end">{{ f.amount | number: '1.2-2' }} RSD</td>
+              <td><app-status-badge [status]="f.status" /></td>
+              <td>
+                @if (f.paid_at) {
+                  {{ f.paid_at | date: 'dd.MM.yyyy HH:mm' }}
+                  <div class="small text-muted">{{ f.payment_method }}</div>
+                } @else {
+                  <span class="text-muted">–</span>
+                }
+              </td>
+              @if (canCollect()) {
+                <td class="text-end">
+                  @if (f.status !== 'placena') {
+                    <button type="button" class="btn btn-sm btn-outline-success" (click)="startPay(f)">Naplati</button>
+                  }
+                </td>
+              }
+            </tr>
+
+            @if (payingId() === f.id) {
+              <tr class="table-light">
+                <td [attr.colspan]="auth.hasRole('gradjanin') ? 8 : 9">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span>Način plaćanja:</span>
+                    <select class="form-select w-auto" [(ngModel)]="paymentMethod" aria-label="Način plaćanja">
+                      <option value="gotovina">Gotovina</option>
+                      <option value="kartica">Kartica</option>
+                      <option value="online">Online</option>
+                    </select>
+                    <button type="button" class="btn btn-sm btn-success" (click)="confirmPay(f)">Potvrdi naplatu</button>
+                    <button type="button" class="btn btn-sm btn-link" (click)="payingId.set(null)">Odustani</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="9" class="text-center text-muted py-4">Nema kazni za prikaz.</td>
+            </tr>
+          }
+        } @else {
+          <tr>
+            <td colspan="9" class="text-center text-muted py-4">{{ loading() ? 'Učitavanje...' : '' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (result(); as page) {
+  <app-pager [page]="page.current_page" [lastPage]="page.last_page" (pageChange)="goToPage($event)" />
+}

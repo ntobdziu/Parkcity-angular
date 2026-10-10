@@ -1,0 +1,55 @@
+<div class="card auth-card">
+  <div class="card-body p-4">
+    <h3 class="text-center mb-1">Registracija</h3>
+    <p class="text-center text-muted mb-4">Novi nalog građanina</p>
+
+    @if (error()) {
+      <div class="alert alert-danger">{{ error() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="mb-3">
+        <label class="form-label" for="name">Ime i prezime</label>
+        <input id="name" type="text" class="form-control" formControlName="name"
+               [class.is-invalid]="form.controls.name.touched && form.controls.name.invalid">
+        <div class="invalid-feedback">Unesi ime i prezime.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="reg-email">Email</label>
+        <input id="reg-email" type="email" class="form-control" formControlName="email"
+               [class.is-invalid]="form.controls.email.touched && form.controls.email.invalid">
+        <div class="invalid-feedback">Unesi ispravnu email adresu.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="phone">Telefon (nije obavezno)</label>
+        <input id="phone" type="text" class="form-control" formControlName="phone">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="reg-password">Lozinka</label>
+        <input id="reg-password" type="password" class="form-control" formControlName="password"
+               [class.is-invalid]="form.controls.password.touched && form.controls.password.invalid"
+               autocomplete="new-password">
+        <div class="invalid-feedback">Lozinka mora imati najmanje 8 karaktera.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="password-confirmation">Potvrda lozinke</label>
+        <input id="password-confirmation" type="password" class="form-control" formControlName="password_confirmation"
+               [class.is-invalid]="form.controls.password_confirmation.touched && form.hasError('mismatch')"
+               autocomplete="new-password">
+        <div class="invalid-feedback">Lozinke se ne poklapaju.</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100" [disabled]="loading()">
+        {{ loading() ? 'Kreiranje naloga...' : 'Registruj se' }}
+      </button>
+    </form>
+
+    <p class="text-center mt-3 mb-0">
+      Već imaš nalog? <a routerLink="/login">Prijavi se</a>
+    </p>
+  </div>
+</div>

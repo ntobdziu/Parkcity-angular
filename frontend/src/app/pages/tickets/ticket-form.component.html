@@ -1,0 +1,169 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Kupovina parking karte</h2>
+  <a routerLink="/tickets" class="btn btn-outline-secondary">&larr; Nazad</a>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+          <!-- Vozilo -->
+          <div class="mb-3">
+            <label class="form-label" for="vehicle">Vozilo</label>
+            <div class="d-flex gap-2">
+              <select id="vehicle" class="form-select" formControlName="vehicle_id"
+                      [class.is-invalid]="form.controls.vehicle_id.touched && form.controls.vehicle_id.invalid">
+                <option [ngValue]="null" disabled>Izaberi vozilo</option>
+                @for (v of vehicles(); track v.id) {
+                  <option [ngValue]="v.id">{{ v.plate }} – {{ v.brand }} {{ v.model }}</option>
+                }
+              </select>
+              <button type="button" class="btn btn-outline-secondary text-nowrap"
+                      (click)="showVehicleForm.set(!showVehicleForm())">+ Vozilo</button>
+            </div>
+            @if (form.controls.vehicle_id.touched && form.controls.vehicle_id.invalid) {
+              <div class="text-danger small mt-1">Izaberi vozilo.</div>
+            }
+          </div>
+
+          <!-- Zona -->
+          <div class="mb-3">
+            <label class="form-label" for="zone">Zona</label>
+            <select id="zone" class="form-select" formControlName="zone_id"
+                    [class.is-invalid]="form.controls.zone_id.touched && form.controls.zone_id.invalid">
+              <option [ngValue]="null" disabled>Izaberi zonu</option>
+              @for (z of zones(); track z.id) {
+                <option [ngValue]="z.id">{{ z.name }} ({{ z.tariff_per_hour | number: '1.0-2' }} RSD/h)</option>
+              }
+            </select>
+            @if (form.controls.zone_id.touched && form.controls.zone_id.invalid) {
+              <div class="text-danger small mt-1">Izaberi zonu.</div>
+            }
+          </div>
+
+          <!-- Kanal -->
+          <div class="mb-3">
+            <label class="form-label" for="channel">Način kupovine</label>
+            <select id="channel" class="form-select" formControlName="channel">
+              <option value="app">Aplikacija</option>
+              <option value="sms">SMS</option>
+              <option value="automat">Parking automat</option>
+            </select>
+          </div>
+
+          <!-- Trajanje -->
+          <div class="mb-3">
+            <label class="form-label" for="duration">Trajanje (minuti)</label>
+            <input id="duration" type="number" class="form-control" formControlName="duration_minutes"
+                   min="15" step="15" [class.is-invalid]="form.controls.duration_minutes.invalid || durationTooLong()">
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              @for (m of quickDurations; track m) {
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="setDuration(m)">{{ m }} min</button>
+              }
+            </div>
+            @if (durationTooLong()) {
+              <div class="text-danger small mt-1">Maksimalno trajanje u ovoj zoni je {{ maxDuration() }} minuta.</div>
+            } @else if (form.controls.duration_minutes.invalid) {
+              <div class="text-danger small mt-1">Trajanje mora biti između 15 i 1440 minuta.</div>
+            }
+          </div>
+
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Kupovina...' : 'Kupi kartu' }}
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Dodavanje vozila -->
+    @if (showVehicleForm()) {
+      <div class="card mt-3">
+        <div class="card-body">
+          <h5 class="card-title">Novo vozilo</h5>
+
+          @if (vehicleError()) {
+            <div class="alert alert-danger">{{ vehicleError() }}</div>
+          }
+
+          <form [formGroup]="vehicleForm" (ngSubmit)="addVehicle()" novalidate>
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label" for="plate">Registracija</label>
+                <input id="plate" type="text" class="form-control" formControlName="plate" placeholder="NP-123-AA"
+                       [class.is-invalid]="vehicleForm.controls.plate.touched && vehicleForm.controls.plate.invalid">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="brand">Marka</label>
+                <input id="brand" type="text" class="form-control" formControlName="brand"
+                       [class.is-invalid]="vehicleForm.controls.brand.touched && vehicleForm.controls.brand.invalid">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="model">Model</label>
+                <input id="model" type="text" class="form-control" formControlName="model"
+                       [class.is-invalid]="vehicleForm.controls.model.touched && vehicleForm.controls.model.invalid">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="type">Tip</label>
+                <select id="type" class="form-select" formControlName="type">
+                  <option value="putnicko">Putničko</option>
+                  <option value="dostavno">Dostavno</option>
+                  <option value="motocikl">Motocikl</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="year">Godina (nije obavezno)</label>
+                <input id="year" type="number" class="form-control" formControlName="year">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-success mt-3" [disabled]="savingVehicle()">Sačuvaj vozilo</button>
+          </form>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Pregled zone i cene (uzivo) -->
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Pregled</h5>
+
+        @if (selectedZone(); as zone) {
+          <dl class="row mb-3">
+            <dt class="col-6">Zona</dt>
+            <dd class="col-6">{{ zone.name }}</dd>
+
+            <dt class="col-6">Lokacija</dt>
+            <dd class="col-6">{{ zone.location }}</dd>
+
+            <dt class="col-6">Tarifa</dt>
+            <dd class="col-6">{{ zone.tariff_per_hour | number: '1.0-2' }} RSD / sat</dd>
+
+            <dt class="col-6">Radno vreme</dt>
+            <dd class="col-6">{{ zone.work_hours_from.slice(0, 5) }} – {{ zone.work_hours_to.slice(0, 5) }}</dd>
+
+            <dt class="col-6">Maks. trajanje</dt>
+            <dd class="col-6">{{ zone.max_duration_minutes ? zone.max_duration_minutes + ' min' : 'bez ograničenja' }}</dd>
+
+            <dt class="col-6">Slobodna mesta</dt>
+            <dd class="col-6">{{ zone.spots_free }} / {{ zone.spots_total }}</dd>
+          </dl>
+        } @else {
+          <p class="text-muted">Izaberi zonu da vidiš tarifu, radno vreme i broj slobodnih mesta.</p>
+        }
+
+        <div class="border-top pt-3">
+          <div class="text-muted">Cena karte</div>
+          <div class="price-box">{{ price() | number: '1.2-2' }} RSD</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

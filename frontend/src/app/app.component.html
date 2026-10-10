@@ -1,0 +1,39 @@
+@if (auth.user(); as user) {
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" routerLink="/">ParkCity</a>
+
+      <button class="navbar-toggler" type="button" aria-label="Meni" (click)="menuOpen.set(!menuOpen())">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" [class.show]="menuOpen()">
+        <!-- Navbar ima samo DVE funkcionalnosti -->
+        <ul class="navbar-nav me-auto mb-2 mb-md-0">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/tickets" routerLinkActive="active" (click)="menuOpen.set(false)">
+              Parking karte
+            </a>
+          </li>
+          @if (auth.hasRole('gradjanin', 'kontrolor', 'admin')) {
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/controls" routerLinkActive="active" (click)="menuOpen.set(false)">
+                Kontrola i kazne
+              </a>
+            </li>
+          }
+        </ul>
+
+        <div class="d-flex align-items-center gap-2 text-white">
+          <span>{{ user.name }}</span>
+          <span class="badge text-bg-secondary text-uppercase">{{ user.role }}</span>
+          <button type="button" class="btn btn-outline-light btn-sm" (click)="logout()">Odjava</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+}
+
+<main class="container py-4">
+  <router-outlet />
+</main>

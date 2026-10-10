@@ -1,0 +1,21 @@
+<h2 class="mb-3">Kontrola i kazne</h2>
+
+<ul class="nav nav-tabs mb-3">
+  @if (auth.hasRole('kontrolor')) {
+    <li class="nav-item">
+      <a class="nav-link" routerLink="check" routerLinkActive="active">Nova kontrola</a>
+    </li>
+  }
+  @if (auth.hasRole('kontrolor', 'admin')) {
+    <li class="nav-item">
+      <a class="nav-link" routerLink="history" routerLinkActive="active">Istorija kontrola</a>
+    </li>
+  }
+  <li class="nav-item">
+    <a class="nav-link" routerLink="fines" routerLinkActive="active">
+      {{ auth.hasRole('gradjanin') ? 'Moje kazne' : 'Kazne' }}
+    </a>
+  </li>
+</ul>
+
+<router-outlet />
